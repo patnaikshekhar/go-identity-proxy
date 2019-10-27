@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -49,32 +50,24 @@ func startProxy(config *Config) {
 		tokenString := authHeader[7:]
 		verifier := provider.Verifier(&oidcConfig)
 
-		verifier.Verify(ctx, tokenString)
+		idToken, err := verifier.Verify(ctx, tokenString)
+		if err != nil {
+			log.Printf("Error: %s", err.Error())
+			response.WriteHeader(403)
+			response.Write([]byte("Forbidden"))
+			return
+		}
 
-		// tokenString := authHeader[7:]
-		// // Test JWT
-		// token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		log.Println(idToken.Audience)
 
-		// 	// Don't forget to validate the alg is what you expect:
-		// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		// 		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		// 	}
+		client := &http.Client{}
+		resp, err := client.Do(request)
 
-		// 	// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		// 	return hmacSampleSecret, nil
-		// })
-
-		// if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		// 	// Send HTTP Request to destination
-		// 	response.Write([]byte("Done"))
-		// } else {
-		// 	response.WriteHeader(403)
-		// 	response.Write([]byte("Forbidden"))
-		// }
-
+		body, _ := ioutil.ReadAll(resp.Body)
+		response.Write(body)
 	})
 
-	err := http.ListenAndServe(config.Address, nil)
+	err = http.ListenAndServe(config.Address, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
