@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/coreos/go-oidc"
 )
 
 func main() {
@@ -20,16 +17,7 @@ func main() {
 
 func startProxy(config *Config) {
 
-	ctx := context.Background()
-	provider, err := oidc.NewProvider(ctx, config.Issuer)
-	if err != nil {
-		log.Println(err)
-
-	}
-
-	oidcConfig := oidc.Config{
-		ClientID: config.ClientID,
-	}
+	checker := NewAuthChecker(config)
 
 	http.HandleFunc("*", func(response http.ResponseWriter, request *http.Request) {
 
@@ -41,14 +29,7 @@ func startProxy(config *Config) {
 			return
 		}
 
-		if authHeader[:6] != "Bearer" {
-			response.WriteHeader(403)
-			response.Write([]byte("Forbidden"))
-			return
-		}
-
-		tokenString := authHeader[7:]
-		verifier := provider.Verifier(&oidcConfig)
+		
 
 		idToken, err := verifier.Verify(ctx, tokenString)
 		if err != nil {
@@ -67,7 +48,7 @@ func startProxy(config *Config) {
 		response.Write(body)
 	})
 
-	err = http.ListenAndServe(config.Address, nil)
+	err := http.ListenAndServe(config.Address, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
