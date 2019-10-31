@@ -46,11 +46,13 @@ func getTokenFromAuthHeader(authHeader string) (string, error) {
 	return tokenString, nil
 }
 
-func CheckToken(authHeader string) error {
-	_, err := getTokenFromAuthHeader(authHeader)
+func (c *AuthChecker) CheckToken(authHeader string) error {
+	token, err := getTokenFromAuthHeader(authHeader)
 	if err != nil {
 		return err
 	}
+
+	log.Println(token)
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -23,29 +22,19 @@ func startProxy(config *Config) {
 
 		// Get the bearer token from the header
 		authHeader := request.Header.Get("Authentication")
-		if authHeader == "" {
-			response.WriteHeader(403)
-			response.Write([]byte("Forbidden"))
-			return
-		}
 
-		
-
-		idToken, err := verifier.Verify(ctx, tokenString)
+		err := checker.CheckToken(authHeader)
 		if err != nil {
-			log.Printf("Error: %s", err.Error())
 			response.WriteHeader(403)
 			response.Write([]byte("Forbidden"))
-			return
 		}
 
-		log.Println(idToken.Audience)
+		// client := &http.Client{}
+		// resp, _ := client.Do(request)
 
-		client := &http.Client{}
-		resp, err := client.Do(request)
-
-		body, _ := ioutil.ReadAll(resp.Body)
-		response.Write(body)
+		// body, _ := ioutil.ReadAll(resp.Body)
+		// response.Write(body)
+		response.Write([]byte("Done"))
 	})
 
 	err := http.ListenAndServe(config.Address, nil)
