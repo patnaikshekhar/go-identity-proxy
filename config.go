@@ -12,7 +12,7 @@ type Config struct {
 	JwksURL          string `json:"jwksURL"`
 	ExpectedAudience string `json:"expectedAudience"`
 	Issuer           string `json:"issuer"`
-	ClientID         string `json:"clientId"`
+	Backend          string `json:"backend"`
 }
 
 // ReadConfig reads the config from config.json

@@ -23,7 +23,7 @@ func NewAuthChecker(config *Config) AuthChecker {
 	}
 
 	oidcConfig := oidc.Config{
-		ClientID: config.ClientID,
+		ClientID: config.ExpectedAudience,
 	}
 
 	verifier := provider.Verifier(&oidcConfig)
@@ -46,13 +46,19 @@ func getTokenFromAuthHeader(authHeader string) (string, error) {
 	return tokenString, nil
 }
 
-func (c *AuthChecker) CheckToken(authHeader string) error {
+// CheckToken checks the validity of an access token
+func (c *AuthChecker) CheckToken(ctx context.Context, authHeader string) error {
 	token, err := getTokenFromAuthHeader(authHeader)
 	if err != nil {
 		return err
 	}
 
-	log.Println(token)
+	idtoken, err := c.verifier.Verify(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	log.Println(idtoken.Subject)
 
 	return nil
 }
